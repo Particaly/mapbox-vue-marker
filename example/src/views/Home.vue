@@ -17,13 +17,14 @@
             }
         },
         mounted(){
-            mapboxgl.accessToken = 'token';
+            mapboxgl.accessToken = 'pk.eyJ1Ijoid3pqOTI3MTIiLCJhIjoiY2pxNXphMmgyMjl4dzN4c3oxZTczaXFuNCJ9.7iqkAVOCgYhh4vdW-hmz4g';
             var map = new mapboxgl.Map({
                 container: 'map', // container id
                 style: 'mapbox://styles/mapbox/streets-v11', // stylesheet location
                 center: [-74.50, 40], // starting position [lng, lat]
                 zoom: 9 // starting zoom
             });
+
             this.marker = this.$makeMarker({
                 lnglat:map.getCenter(),
                 component:vuemarker,
