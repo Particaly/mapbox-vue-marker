@@ -287,7 +287,10 @@ EventProxy = {
     getMarkerBox:function () {
         if(this.$route&&this.$route.path){
             let path = this.$route.path.replace(/\//g,"_");
-            return databox[path]?databox[path].getMarkerBox():new MarkerBox(this,path);
+            if(!databox[path]){
+                databox[path] = new MarkerBox(this, path);
+            }
+            return databox[path].getMarkerBox();
         }
     }
 };
