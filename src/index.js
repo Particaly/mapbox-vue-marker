@@ -82,6 +82,9 @@ function $addMarker(target,map){
             //如果不是marker
             for(let keys in target){ // 遍历目标
                 if(target[keys]._isVueMarker){
+                    if(target._vue_parent._isDestroyed || target._vue_parent._isBeingDestroyed){
+                        return console.warn('添加marker时，因为父组件已被销毁，所以上图被阻止了');
+                    }
                     target[keys].addTo(map)
                 }else if(target[keys].constructor === Array||target[keys].constructor === Object){
                     //仅在目标是对象或数组的情况下继续遍历
