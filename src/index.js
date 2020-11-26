@@ -74,6 +74,9 @@ function $addMarker(target,map){
     if(isType('Object',target)||isType('Array',target)){
         if(target._isVueMarker){
             //如果目标是marker
+            if(target._vue_parent._isDestroyed || target._vue_parent._isBeingDestroyed){
+                return console.warn('添加marker时，因为父组件已被销毁，所以上图被阻止了');
+            }
             target.addTo(map)
         }else{
             //如果不是marker
@@ -172,6 +175,7 @@ function $makeMarker(options){
     }
     // 挂载子组件到根dom
     marker.vue = vuedom.$children[0];
+    marker._vue_parent = this;
     div.appendChild(vuedom.$el);
     
     if(options.mid){marker.mid = options.id}
