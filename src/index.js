@@ -74,7 +74,7 @@ function $addMarker(target,map){
     if(isType('Object',target)||isType('Array',target)){
         if(target._isVueMarker){
             //如果目标是marker
-            if(target._vue_parent._isDestroyed || target._vue_parent._isBeingDestroyed){
+            if(target._vue_parent?._isDestroyed || target._vue_parent?._isBeingDestroyed){
                 return console.warn('添加marker时，因为父组件已被销毁，所以上图被阻止了');
             }
             target.addTo(map)
@@ -82,7 +82,7 @@ function $addMarker(target,map){
             //如果不是marker
             for(let keys in target){ // 遍历目标
                 if(target[keys]._isVueMarker){
-                    if(target._vue_parent._isDestroyed || target._vue_parent._isBeingDestroyed){
+                    if(target._vue_parent?._isDestroyed || target._vue_parent?._isBeingDestroyed){
                         return console.warn('添加marker时，因为父组件已被销毁，所以上图被阻止了');
                     }
                     target[keys].addTo(map)
