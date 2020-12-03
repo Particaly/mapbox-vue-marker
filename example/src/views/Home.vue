@@ -73,8 +73,12 @@
                 *
                 * add方法需要传入map
                 * */
-                window.marker1 = markerOnly
-                window.markerbox = markerBox
+	            window.marker1 = markerOnly;
+	            window.markerbox = markerBox;
+
+	            map.on('zoom', () => {
+	               this.$store.commit('setZoom', map.getZoom())
+	            });
                 // this.$addMarker(markerOnly,map)
                 // this.$addMarker(markerBox,map)
                 // this.$removeMarker(markerOnly)

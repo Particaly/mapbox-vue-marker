@@ -47,7 +47,7 @@ class MarkerBox{
                 vm.$once('hook:beforeDestroy', () => {
                     let box = [...this.hookTrigger[id]];
                     this.hookTrigger[id] = null;
-                    $removeMarker(box);
+                    $removeMarker(box, true);
                 });
             } else {
                 this.hookTrigger[id].push(marker);
@@ -62,7 +62,7 @@ class MarkerBox{
         this.box = {
             other:[]
         };
-        $removeMarker(box);
+        $removeMarker(box, true);
     }
 }
 /*
@@ -109,14 +109,21 @@ function $addMarker(target,map){
 *
 * params target 可以是数组、对象和通过本插件构造的marker本身,将遍历传入对象所包含的所有marker
 * */
-function $removeMarker(target){
+function $removeMarker(target, needDestroy){
+    console.log(target);
     if(isType('Object',target)||isType('Array',target)){
         if(target._isVueMarker){
             target.remove();
+            if(needDestroy) {
+                target.vue.$root.$destroy();
+            }
         }else{
             for(let keys in target){ // 遍历目标
                 if(target[keys]._isVueMarker){
-                    target[keys].remove()
+                    target[keys].remove();
+                    if(needDestroy) {
+                        target[keys].vue.$root.$destroy();
+                    }
                 }else if(target[keys].constructor === Array||target[keys].constructor === Object){
                     //仅在目标是对象或数组的情况下继续遍历
                     $removeMarker(target[keys]);
@@ -312,6 +319,9 @@ EventProxy = {
             }
             return databox[path].getMarkerBox();
         }
+    },
+    getDataBox:function () {
+        return databox;
     }
 };
 /*
@@ -339,13 +349,15 @@ function install(_vue,options) {
         '$addMarker':'addMarkerHandler',
         '$removeMarker':'removeMarkerHandler',
         '$makeMarker':'makeMarkerHandler',
-        '$getMarkerBox':'getMarkerBox'
+        '$getMarkerBox':'getMarkerBox',
+        '$getMarkerFull': 'getDataBox'
     };
     if(!options.rename){
         vue.prototype.$addMarker = EventProxy.addMarkerHandler;
         vue.prototype.$removeMarker = EventProxy.removeMarkerHandler;
         vue.prototype.$makeMarker = EventProxy.makeMarkerHandler;
         vue.prototype.$getMarkerBox = EventProxy.getMarkerBox;
+        vue.prototype.$getMarkerFull = EventProxy.getDataBox;
     }else{
         for(let i in namebox){
             let defaultName = i,

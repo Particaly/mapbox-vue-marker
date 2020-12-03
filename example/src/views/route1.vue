@@ -13,6 +13,9 @@
 					const marker = this.$makeMarker({
 						component: vuemarker,
 						lnglat,
+                        props: {
+						    debug: true
+                        },
 						usebox: true,
 						markerType: 'vuemarker'
 					});
