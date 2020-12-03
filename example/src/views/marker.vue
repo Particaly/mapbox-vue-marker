@@ -14,7 +14,7 @@
         props:['marker','parent'],
         mounted() {
             this.randomColor = `rgb(${Math.random()*255},${Math.random()*255},${Math.random()*255})`
-            console.log(this);
+            // console.log(this);
         },
         /*
         * marker在被添加到地图上和被移除的时候，默认会调用一下两个方法作为回调

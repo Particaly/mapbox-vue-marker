@@ -55,7 +55,7 @@
 
 
 
-            console.log(this.$getMarkerBox());
+            // console.log(this.$getMarkerBox());
 
             for(let i in this.lnglatBox){
                 let marker = this.$makeMarker({
@@ -75,9 +75,9 @@
                 * */
                 window.marker1 = markerOnly
                 window.markerbox = markerBox
-                this.$addMarker(markerOnly,map)
-                this.$addMarker(markerBox,map)
-                this.$removeMarker(markerOnly)
+                // this.$addMarker(markerOnly,map)
+                // this.$addMarker(markerBox,map)
+                // this.$removeMarker(markerOnly)
             })
         },
     }

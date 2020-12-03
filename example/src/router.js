@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Home from './views/Home.vue'
+import route1 from './views/route1.vue'
+import route2 from './views/route2.vue'
 
 Vue.use(Router)
 
@@ -8,12 +9,12 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: Home
+      name: 'route1',
+      component: route1
     },{
       path:'/1',
       name:'home2',
-      // component:Home
+      component:route2
     }
   ]
 })

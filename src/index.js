@@ -9,7 +9,7 @@
 * */
 import { version } from '../package.json';
 import { log } from '@jspatrick/helper';
-let vue,mapboxgl,router,store,EventProxy,plug,Markerbox,databox;
+let vue,mapboxgl,router,store,EventProxy,plug,databox;
 /*
 * 存储不同页面的不同数据盒子
 * */
@@ -22,16 +22,13 @@ databox = {
 * 存放当前页面下的所有类型的marker盒子
 * */
 class MarkerBox{
-    constructor(vue_this,path){
+    constructor(path){
         this.box = {
             other:[]
         };
-        this.box.__proto__ = this;
+        this.hookTrigger = {};
         this.path = path;
-        this.component = vue_this;
-        this.bindHook();
     }
-
     pushMarker(marker,type){
         if(isType('String',type)){
             if(this.box.hasOwnProperty(type)){
@@ -42,17 +39,30 @@ class MarkerBox{
         }else{
             this.box.other.push(marker);
         }
-    }
-    bindHook(){
-        if(isType('Object',this.component)&&this.component._isVue){
-            this.component.$once('hook:beforeDestroy',() => {
-                $removeMarker(this.box);
-                databox.removeBox(this.path);
-            })
+        const vm = marker._vue_parent;
+        if(vm){
+            const id = vm._uid.toString();
+            if(!this.hookTrigger[id]){
+                this.hookTrigger[id] = [marker];
+                vm.$once('hook:beforeDestroy', () => {
+                    let box = [...this.hookTrigger[id]];
+                    this.hookTrigger[id] = null;
+                    $removeMarker(box);
+                });
+            } else {
+                this.hookTrigger[id].push(marker);
+            }
         }
     }
     getMarkerBox(){
         return this.box;
+    }
+    clear() {
+        const box = this.box;
+        this.box = {
+            other:[]
+        };
+        $removeMarker(box);
     }
 }
 /*
@@ -102,7 +112,7 @@ function $addMarker(target,map){
 function $removeMarker(target){
     if(isType('Object',target)||isType('Array',target)){
         if(target._isVueMarker){
-            target.remove()
+            target.remove();
         }else{
             for(let keys in target){ // 遍历目标
                 if(target[keys]._isVueMarker){
@@ -273,20 +283,23 @@ EventProxy = {
         $removeMarker(...arguments)
     },
     makeMarkerHandler:function (options) {
+        if(!this||this._isDestroyed||this._isBeingDestroyed){
+            return {}
+        }
         let marker = $makeMarker.bind(this)(...arguments);
         if(options.usebox){
             if(this.$route&&this.$route.path){
                 let path = this.$route.path.replace(/\//g,"_");
                 if(!databox[path]){
-                    databox[path] = new MarkerBox(this,path)
+                    databox[path] = new MarkerBox(path);
                 }
-                databox[path].pushMarker(marker,options.markerType)
+                databox[path].pushMarker(marker, options.markerType);
             }else{
                 let path = 'markerbox'+this._uid.replace(/\//g,"_");
                 if(!databox[path]){
-                    databox[path] = new MarkerBox(this,path)
+                    databox[path] = new MarkerBox(path);
                 }
-                databox[path].pushMarker(marker,options.markerType)
+                databox[path].pushMarker(marker, options.markerType);
             }
         }
         return marker
@@ -295,7 +308,7 @@ EventProxy = {
         if(this.$route&&this.$route.path){
             let path = this.$route.path.replace(/\//g,"_");
             if(!databox[path]){
-                databox[path] = new MarkerBox(this, path);
+                databox[path] = new MarkerBox(path);
             }
             return databox[path].getMarkerBox();
         }
@@ -307,7 +320,19 @@ EventProxy = {
 function install(_vue,options) {
     vue = _vue;
     if(!options.mapboxgl){throw new Error('mapboxgl must be used as a parameter to Plug "mapbox-vue-marker" ')}
-    if(options.router){router = options.router}
+    if(options.router){
+        router = options.router;
+        router.afterEach((to, from) => {
+            let toPath = to.path.replace(/\//g,"_");
+            let fromPath = from.path.replace(/\//g,"_");
+            if(!databox[toPath]){
+                databox[toPath] = new MarkerBox(toPath);
+            }
+            if(databox[fromPath]){
+                databox[fromPath].clear();
+            }
+        });
+    }
     if(options.store){store = options.store}
     mapboxgl = options.mapboxgl;
     let namebox = {

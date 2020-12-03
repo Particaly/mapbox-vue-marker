@@ -4,7 +4,7 @@
   "description": "A plug-in that allows you to develop mapbox GL pins using Vue components",
   "main": "dist/index.js",
   "scripts": {
-    "build": "rollup --config build/rollup.config.umd.js",
+    "build": "rollup --config build/rollup.config.umd.js&&node build",
     "pub": "npm version patch&&npm publish",
     "test": ""
   },
