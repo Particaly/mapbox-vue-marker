@@ -110,7 +110,6 @@ function $addMarker(target,map){
 * params target 可以是数组、对象和通过本插件构造的marker本身,将遍历传入对象所包含的所有marker
 * */
 function $removeMarker(target, needDestroy){
-    console.log(target);
     if(isType('Object',target)||isType('Array',target)){
         if(target._isVueMarker){
             target.remove();
