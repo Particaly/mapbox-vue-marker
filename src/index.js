@@ -319,6 +319,15 @@ EventProxy = {
             return databox[path].getMarkerBox();
         }
     },
+    clearMarkerHandler:function(args) {
+        if(isType('String', args)){
+            let markers = this.$getMarkerBox()[args];
+            this.$removeMarker(markers, true);
+            this.$getMarkerBox()[args] = [];
+        } else {
+            this.$removeMarker(args, true);
+        }
+    },
     getDataBox:function () {
         return databox;
     }
@@ -349,7 +358,8 @@ function install(_vue,options) {
         '$removeMarker':'removeMarkerHandler',
         '$makeMarker':'makeMarkerHandler',
         '$getMarkerBox':'getMarkerBox',
-        '$getMarkerFull': 'getDataBox'
+        '$getMarkerFull': 'getDataBox',
+        '$clearMarker': 'clearMarkerHandler'
     };
     if(!options.rename){
         vue.prototype.$addMarker = EventProxy.addMarkerHandler;
@@ -357,6 +367,7 @@ function install(_vue,options) {
         vue.prototype.$makeMarker = EventProxy.makeMarkerHandler;
         vue.prototype.$getMarkerBox = EventProxy.getMarkerBox;
         vue.prototype.$getMarkerFull = EventProxy.getDataBox;
+        vue.prototype.$clearMarker = EventProxy.clearMarkerHandler;
     }else{
         for(let i in namebox){
             let defaultName = i,

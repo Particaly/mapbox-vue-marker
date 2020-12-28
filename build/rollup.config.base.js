@@ -8,7 +8,7 @@ export default {
   plugins: [
     babel(),
     json(),
-    resolve(),
-    commonjs()
+    // resolve(),
+    // commonjs()
   ]
 }
