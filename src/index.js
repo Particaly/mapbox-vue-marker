@@ -7,62 +7,79 @@
 *
 * Powered By J.S.Patrick   980141374@qq.com
 * */
-import { version } from '../package.json';
-import { log } from '@jspatrick/helper';
-let vue,mapboxgl,router,store,EventProxy,plug,Markerbox,databox;
+import {version} from '../package.json';
+import {log} from '@jspatrick/helper';
+
+let vue, mapboxgl, router, store, EventProxy, plug, databox;
 /*
 * 存储不同页面的不同数据盒子
 * */
 databox = {
-    removeBox:function (path) {
+    removeBox: function (path) {
         databox[path] = undefined;
     }
 };
+
 /*
 * 存放当前页面下的所有类型的marker盒子
 * */
-class MarkerBox{
-    constructor(vue_this,path){
+class MarkerBox {
+    constructor(path) {
         this.box = {
-            other:[]
+            other: []
         };
-        this.box.__proto__ = this;
+        this.hookTrigger = {};
         this.path = path;
-        this.component = vue_this;
-        this.bindHook();
     }
 
-    pushMarker(marker,type){
-        if(isType('String',type)){
-            if(this.box.hasOwnProperty(type)){
+    pushMarker(marker, type) {
+        if (isType('String', type)) {
+            if (this.box.hasOwnProperty(type)) {
                 this.box[type].push(marker)
-            }else{
+            } else {
                 this.box[type] = [marker];
             }
-        }else{
+        } else {
             this.box.other.push(marker);
         }
-    }
-    bindHook(){
-        if(isType('Object',this.component)&&this.component._isVue){
-            this.component.$once('hook:beforeDestroy',() => {
-                $removeMarker(this.box);
-                databox.removeBox(this.path);
-            })
+        const vm = marker._vue_parent;
+        if (vm) {
+            const id = vm._uid.toString();
+            if (!this.hookTrigger[id]) {
+                this.hookTrigger[id] = [marker];
+                vm.$once('hook:beforeDestroy', () => {
+                    let box = [...this.hookTrigger[id]];
+                    this.hookTrigger[id] = null;
+                    $removeMarker(box, true);
+                });
+            } else {
+                this.hookTrigger[id].push(marker);
+            }
         }
     }
-    getMarkerBox(){
+
+    getMarkerBox() {
         return this.box;
     }
+
+    clear() {
+        const box = this.box;
+        this.box = {
+            other: []
+        };
+        $removeMarker(box, true);
+    }
 }
+
 /*
 * 插件配置对象
 * */
 plug = {
     install,
     version,
-    log:true,
+    log: true,
 };
+
 /*
 * 把marker添加到地图上
 *
@@ -70,38 +87,51 @@ plug = {
 *
 * parmas map 实例化的mapbox的地图对象
 * */
-function $addMarker(target,map){
-    if(isType('Object',target)||isType('Array',target)){
-        if(target._isVueMarker){
+function $addMarker(target, map) {
+    if (isType('Object', target) || isType('Array', target)) {
+        if (target._isVueMarker) {
             //如果目标是marker
+            if (target._vue_parent?._isDestroyed || target._vue_parent?._isBeingDestroyed) {
+                return console.warn('添加marker时，因为父组件已被销毁，所以上图被阻止了');
+            }
             target.addTo(map)
-        }else{
+        } else {
             //如果不是marker
-            for(let keys in target){ // 遍历目标
-                if(target[keys]._isVueMarker){
+            for (let keys in target) { // 遍历目标
+                if (target[keys]._isVueMarker) {
+                    if (target._vue_parent?._isDestroyed || target._vue_parent?._isBeingDestroyed) {
+                        return console.warn('添加marker时，因为父组件已被销毁，所以上图被阻止了');
+                    }
                     target[keys].addTo(map)
-                }else if(target[keys].constructor === Array||target[keys].constructor === Object){
+                } else if (target[keys].constructor === Array || target[keys].constructor === Object) {
                     //仅在目标是对象或数组的情况下继续遍历
-                    $addMarker(target[keys],map)
+                    $addMarker(target[keys], map)
                 }
             }
         }
     }
 }
+
 /*
 * 从地图上移除marker
 *
 * params target 可以是数组、对象和通过本插件构造的marker本身,将遍历传入对象所包含的所有marker
 * */
-function $removeMarker(target){
-    if(isType('Object',target)||isType('Array',target)){
-        if(target._isVueMarker){
-            target.remove()
-        }else{
-            for(let keys in target){ // 遍历目标
-                if(target[keys]._isVueMarker){
-                    target[keys].remove()
-                }else if(target[keys].constructor === Array||target[keys].constructor === Object){
+function $removeMarker(target, needDestroy) {
+    if (isType('Object', target) || isType('Array', target)) {
+        if (target._isVueMarker) {
+            target.remove();
+            if (needDestroy) {
+                target.vue.$root.$destroy();
+            }
+        } else {
+            for (let keys in target) { // 遍历目标
+                if (target[keys]._isVueMarker) {
+                    target[keys].remove();
+                    if (needDestroy) {
+                        target[keys].vue.$root.$destroy();
+                    }
+                } else if (target[keys].constructor === Array || target[keys].constructor === Object) {
                     //仅在目标是对象或数组的情况下继续遍历
                     $removeMarker(target[keys]);
                 }
@@ -109,6 +139,7 @@ function $removeMarker(target){
         }
     }
 }
+
 /*
 * 制作marker并返回marker对象
 *
@@ -123,63 +154,76 @@ function $removeMarker(target){
 *       zIndex :Number                  ->  扎点dom的层级
 * }
 * */
-function $makeMarker(options){
+function $makeMarker(options) {
     // 预检查必要属性是否存在
-    if(!options){return false}
-    if(!options.lnglat){
-        plug.log&&log('Marker\'s longitude and latitude are undefined')
+    if (!options) {
+        return false
+    }
+    if (!options.lnglat) {
+        plug.log && log('Marker\'s longitude and latitude are undefined')
         options.lnglat = {lng: 116.39146176546785, lat: 39.9031645721154}
     }
-    if(!options.component){throw new Error('缺少vue组件')}
-    if(!options.anchor){options.anchor = 'bottom'}
-    if(!options.props){options.props={}}
-    if(!options.draggable){options.draggable=false}
+    if (!options.component) {
+        throw new Error('缺少vue组件')
+    }
+    if (!options.anchor) {
+        options.anchor = 'bottom'
+    }
+    if (!options.props) {
+        options.props = {}
+    }
+    if (!options.draggable) {
+        options.draggable = false
+    }
 
     // 创建根dom
     let div = document.createElement('div');
     div.className = 'marker ';
-    if(isType('String', options.className)){
+    if (isType('String', options.className)) {
         div.className += options.className
-    }else if(isType('Array', options.className)){
-        for (let i of options.className){
-            div.className += ' '+i;
+    } else if (isType('Array', options.className)) {
+        for (let i of options.className) {
+            div.className += ' ' + i;
         }
     }
     // 创建根vue对象
-    let extendOption = {template:div};
+    let extendOption = {template: div};
     // 创建marker对象
     let marker = new mapboxgl.Marker({
-        element:div,
-        anchor:options.anchor,
+        element: div,
+        anchor: options.anchor,
         draggable: options.draggable
     }).setLngLat(options.lnglat);
-    overwrite(marker,options);
+    overwrite(marker, options);
     // 向组件注入props
     options.props['marker'] = marker;
     options.props['parent'] = this;
     // 实例化根组件
     let prePointer = vue.extend(extendOption);
     const vuedom = new prePointer({
-        el : div,
+        el: div,
         router,
         store,
-        render:h => h(options.component,{props:options.props},[])
+        render: h => h(options.component, {props: options.props}, [])
     });
 
     //如果有层级参数，设置层级参数
-    if(options.zIndex){
+    if (options.zIndex) {
         marker._zIndex = options.zIndex;
     }
     // 挂载子组件到根dom
     marker.vue = vuedom.$children[0];
+    marker._vue_parent = this;
     div.appendChild(vuedom.$el);
-    
-    if(options.mid){marker.mid = options.id}
-    
-    function overwrite(marker,options){
+
+    if (options.mid) {
+        marker.mid = options.id
+    }
+
+    function overwrite(marker, options) {
         marker._isVueMarker = true;
         marker.addTo = new Proxy(marker.addTo, {
-            apply :function (target, thisArg, argArray) {
+            apply: function (target, thisArg, argArray) {
                 let res = Reflect.apply(...arguments);
                 addTo.bind(thisArg)();
                 marker._isOnMap = true;
@@ -187,7 +231,7 @@ function $makeMarker(options){
             }
         });
         marker.remove = new Proxy(marker.remove, {
-            apply :function (target, thisArg, argArray) {
+            apply: function (target, thisArg, argArray) {
                 let tempArg = arguments;
                 remove.bind(thisArg)(() => {
                     Reflect.apply(...tempArg);
@@ -195,139 +239,180 @@ function $makeMarker(options){
                 });
             }
         });
-        if(options.zIndex === undefined) {
+        if (options.zIndex === undefined) {
             marker._update = new Proxy(marker._update, {
-                apply :function (target, thisArg, argArray) {
+                apply: function (target, thisArg, argArray) {
                     let res = Reflect.apply(...arguments);
                     update.bind(marker)();
                     return res
                 }
             });
         }
-        function addTo(){
-            if(this._zIndex){
+
+        function addTo() {
+            if (this._zIndex) {
                 this.getElement().style.zIndex = this._map.getContainer().clientHeight + this._zIndex;
             }
-            if(this.vue&&this.vue.onAdd){
+            if (this.vue && this.vue.onAdd) {
                 const mountReady = this.vue._isMounted;
-                if(mountReady){
+                if (mountReady) {
                     this.vue.onAdd();
-                }else{
+                } else {
                     this.vue.$once('hook:mounted', this.vue.onAdd);
                 }
             }
         }
-        function remove(callback){
-            if(this.vue&&this.vue.onRemove){
+
+        function remove(callback) {
+            if (this.vue && this.vue.onRemove) {
                 const result = this.vue.onRemove(callback);
-                if(result !== true){
+                if (result !== true) {
                     const delay = Number(result);
-                    if(!isNaN(delay)){
+                    if (!isNaN(delay)) {
                         setTimeout(() => {
                             callback()
-                        },delay)
-                    }else{
+                        }, delay)
+                    } else {
                         callback()
                     }
-                }else{
+                } else {
                     log('移除扎点的返回值为true，需要手动移除marker方法');
                 }
-            }else{
+            } else {
                 callback()
             }
         }
+
         function update() {
             this.getElement().style.zIndex = ~~this._pos.y;
             try {
                 this.vue.markerIndex = ~~this._pos.y;
-            }catch (e) {
-            
+            } catch (e) {
+
             }
         }
     }
+
     return marker
 }
 
 /*
 * 验证类型
 * */
-function isType(type,target){
+function isType(type, target) {
     const Tag = `[object ${type}]`;
     return Object.prototype.toString.call(target) === Tag
 }
+
 /*
 * 函数中转代理，接收vue组件的this作用域
 * */
 EventProxy = {
-    addMarkerHandler:function () {
+    addMarkerHandler: function () {
         $addMarker(...arguments)
     },
-    removeMarkerHandler:function () {
+    removeMarkerHandler: function () {
         $removeMarker(...arguments)
     },
-    makeMarkerHandler:function (options) {
+    makeMarkerHandler: function (options) {
+        if (!this || this._isDestroyed || this._isBeingDestroyed) {
+            return {}
+        }
         let marker = $makeMarker.bind(this)(...arguments);
-        if(options.usebox){
-            if(this.$route&&this.$route.path){
-                let path = this.$route.path.replace(/\//g,"_");
-                if(!databox[path]){
-                    databox[path] = new MarkerBox(this,path)
+        if (options.usebox) {
+            if (this.$route && this.$route.path) {
+                let path = this.$route.path.replace(/\//g, "_");
+                if (!databox[path]) {
+                    databox[path] = new MarkerBox(path);
                 }
-                databox[path].pushMarker(marker,options.markerType)
-            }else{
-                let path = 'markerbox'+this._uid.replace(/\//g,"_");
-                if(!databox[path]){
-                    databox[path] = new MarkerBox(this,path)
+                databox[path].pushMarker(marker, options.markerType);
+            } else {
+                let path = 'markerbox' + this._uid.replace(/\//g, "_");
+                if (!databox[path]) {
+                    databox[path] = new MarkerBox(path);
                 }
-                databox[path].pushMarker(marker,options.markerType)
+                databox[path].pushMarker(marker, options.markerType);
             }
         }
         return marker
     },
-    getMarkerBox:function () {
-        if(this.$route&&this.$route.path){
-            let path = this.$route.path.replace(/\//g,"_");
-            if(!databox[path]){
-                databox[path] = new MarkerBox(this, path);
+    getMarkerBox: function () {
+        if (this.$route && this.$route.path) {
+            let path = this.$route.path.replace(/\//g, "_");
+            if (!databox[path]) {
+                databox[path] = new MarkerBox(path);
             }
             return databox[path].getMarkerBox();
         }
+    },
+    clearMarkerHandler: function (args) {
+        if (isType('String', args)) {
+            let markers = this.$getMarkerBox()[args];
+            this.$removeMarker(markers, true);
+            this.$getMarkerBox()[args] = [];
+        } else {
+            this.$removeMarker(args, true);
+        }
+    },
+    getDataBox: function () {
+        return databox;
     }
 };
+
 /*
 * 暴露给vue的安装函数，也是对整个命名空间的初始化
 * */
-function install(_vue,options) {
+function install(_vue, options) {
     vue = _vue;
-    if(!options.mapboxgl){throw new Error('mapboxgl must be used as a parameter to Plug "mapbox-vue-marker" ')}
-    if(options.router){router = options.router}
-    if(options.store){store = options.store}
+    if (!options.mapboxgl) {
+        throw new Error('mapboxgl must be used as a parameter to Plug "mapbox-vue-marker" ')
+    }
+    if (options.router) {
+        router = options.router;
+        router.afterEach((to, from) => {
+            let toPath = to.path.replace(/\//g, "_");
+            let fromPath = from.path.replace(/\//g, "_");
+            if (!databox[toPath]) {
+                databox[toPath] = new MarkerBox(toPath);
+            }
+            if (databox[fromPath]) {
+                databox[fromPath].clear();
+            }
+        });
+    }
+    if (options.store) {
+        store = options.store
+    }
     mapboxgl = options.mapboxgl;
     let namebox = {
-        '$addMarker':'addMarkerHandler',
-        '$removeMarker':'removeMarkerHandler',
-        '$makeMarker':'makeMarkerHandler',
-        '$getMarkerBox':'getMarkerBox'
+        '$addMarker': 'addMarkerHandler',
+        '$removeMarker': 'removeMarkerHandler',
+        '$makeMarker': 'makeMarkerHandler',
+        '$getMarkerBox': 'getMarkerBox',
+        '$getMarkerFull': 'getDataBox',
+        '$clearMarker': 'clearMarkerHandler'
     };
-    if(!options.rename){
+    if (!options.rename) {
         vue.prototype.$addMarker = EventProxy.addMarkerHandler;
         vue.prototype.$removeMarker = EventProxy.removeMarkerHandler;
         vue.prototype.$makeMarker = EventProxy.makeMarkerHandler;
         vue.prototype.$getMarkerBox = EventProxy.getMarkerBox;
-    }else{
-        for(let i in namebox){
+        vue.prototype.$getMarkerFull = EventProxy.getDataBox;
+        vue.prototype.$clearMarker = EventProxy.clearMarkerHandler;
+    } else {
+        for (let i in namebox) {
             let defaultName = i,
                 name = options.rename[defaultName],
                 handler = namebox[i];
-            if(name){
+            if (name) {
                 namebox[i] = name;
                 vue.prototype[name] = EventProxy[handler];
-            }else{
+            } else {
                 vue.prototype[i] = EventProxy[handler];
             }
         }
     }
-    plug.log&&log(`😁Mapbox-Vue-Marker ready Verson --> ${version}`)
+    plug.log && log(`😁Mapbox-Vue-Marker ready Verson --> ${version}`)
     // vue.prototype._vueMarkerOption = namebox;
 }
 

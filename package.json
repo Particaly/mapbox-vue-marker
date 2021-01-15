@@ -13,7 +13,10 @@
     "mapbox",
     "marker"
   ],
-  "files": ["dist","src"],
+  "files": [
+    "dist",
+    "src"
+  ],
   "author": "J.S.Patrick",
   "license": "ISC",
   "devDependencies": {
@@ -29,6 +32,6 @@
     "rollup-plugin-uglify-es": "0.0.1"
   },
   "dependencies": {
-    "@jspatrick/helper": "^0.1.1"
+    "@jspatrick/helper": "^0.1.52"
   }
 }

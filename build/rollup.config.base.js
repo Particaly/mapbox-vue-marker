@@ -4,11 +4,11 @@ import commonjs from 'rollup-plugin-commonjs' // 将CommonJS模块转换为 ES20
 import babel from 'rollup-plugin-babel'  // rollup 的 babel 插件，ES6转ES5
 
 export default {
-  input: 'src/index.js',
-  plugins: [
-    babel(),
-    json(),
-    resolve(),
-    commonjs()
-  ]
+    input: 'src/index.js',
+    plugins: [
+        babel(),
+        json(),
+        // resolve(),
+        commonjs()
+    ]
 }
