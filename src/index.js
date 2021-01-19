@@ -114,18 +114,40 @@ function $removeMarker(target, needDestroy){
         if(target._isVueMarker){
             target.remove();
             if(needDestroy) {
-                target.vue.$root.$destroy();
+                let marker = target[keys];
+                if(marker._path&&marker._markerType){
+                    let box = databox[marker._path].box[marker._markerType];
+                    let index = box.findIndex(item => item === marker);
+                    if(index >= 0){
+                        box.splice(index, 1, null);
+                    }
+                }
+                marker.vue.$root.$destroy();
+                let tkeys = Object.keys(marker);
+                tkeys.forEach(key => marker[key] = null);
             }
         }else{
             for(let keys in target){ // 遍历目标
-                if(target[keys]._isVueMarker){
-                    target[keys].remove();
-                    if(needDestroy) {
-                        target[keys].vue.$root.$destroy();
+                if(target.hasOwnProperty(keys)){
+                    if(target[keys]&&target[keys]._isVueMarker){
+                        target[keys].remove();
+                        if(needDestroy) {
+                            let marker = target[keys];
+                            if(marker._path&&marker._markerType){
+                                let box = databox[marker._path].box[marker._markerType];
+                                let index = box.findIndex(item => item === marker);
+                                if(index >= 0){
+                                    box.splice(index, 1, null);
+                                }
+                            }
+                            marker.vue.$root.$destroy();
+                            let tkeys = Object.keys(marker);
+                            tkeys.forEach(key => marker[key] = null);
+                        }
+                    }else if(isType('Object', target[keys])||isType('Array', target[keys])){
+                        //仅在目标是对象或数组的情况下继续遍历
+                        return $removeMarker(target[keys]);
                     }
-                }else if(target[keys].constructor === Array||target[keys].constructor === Object){
-                    //仅在目标是对象或数组的情况下继续遍历
-                    $removeMarker(target[keys]);
                 }
             }
         }
@@ -196,9 +218,9 @@ function $makeMarker(options){
     marker.vue = vuedom.$children[0];
     marker._vue_parent = this;
     div.appendChild(vuedom.$el);
-    
+
     if(options.mid){marker.mid = options.id}
-    
+
     function overwrite(marker,options){
         marker._isVueMarker = true;
         marker.addTo = new Proxy(marker.addTo, {
@@ -264,7 +286,7 @@ function $makeMarker(options){
             try {
                 this.vue.markerIndex = ~~this._pos.y;
             }catch (e) {
-            
+
             }
         }
     }
@@ -293,18 +315,21 @@ EventProxy = {
             return {}
         }
         let marker = $makeMarker.bind(this)(...arguments);
+        marker._markerType = options.markerType;
         if(options.usebox){
             if(this.$route&&this.$route.path){
                 let path = this.$route.path.replace(/\//g,"_");
                 if(!databox[path]){
                     databox[path] = new MarkerBox(path);
                 }
+                marker._path = path;
                 databox[path].pushMarker(marker, options.markerType);
             }else{
                 let path = 'markerbox'+this._uid.replace(/\//g,"_");
                 if(!databox[path]){
                     databox[path] = new MarkerBox(path);
                 }
+                marker._path = path;
                 databox[path].pushMarker(marker, options.markerType);
             }
         }

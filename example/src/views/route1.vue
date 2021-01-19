@@ -19,8 +19,13 @@
 						usebox: true,
 						markerType: 'vuemarker'
 					});
+					console.log(marker);
 					this.$addMarker(marker, window.map);
 				});
+
+                setTimeout(() => {
+                    this.$removeMarker(this.$getMarkerBox().vuemarker, true);
+                },1000);
 			},3000)
         }
 	}
