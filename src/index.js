@@ -114,6 +114,7 @@ function $removeMarker(target, needDestroy){
         if(target._isVueMarker){
             target.remove();
             if(needDestroy) {
+                console.log(marker._markerType);
                 let marker = target[keys];
                 if(marker._path&&marker._markerType){
                     let box = databox[marker._path].box[marker._markerType];
@@ -123,8 +124,7 @@ function $removeMarker(target, needDestroy){
                     }
                 }
                 marker.vue.$root.$destroy();
-                let tkeys = Object.keys(marker);
-                tkeys.forEach(key => marker[key] = null);
+                marker.vue = marker._vue_parent = null;
             }
         }else{
             for(let keys in target){ // 遍历目标
@@ -141,8 +141,7 @@ function $removeMarker(target, needDestroy){
                                 }
                             }
                             marker.vue.$root.$destroy();
-                            let tkeys = Object.keys(marker);
-                            tkeys.forEach(key => marker[key] = null);
+                            marker.vue = marker._vue_parent = null;
                         }
                     }else if(isType('Object', target[keys])||isType('Array', target[keys])){
                         //仅在目标是对象或数组的情况下继续遍历
