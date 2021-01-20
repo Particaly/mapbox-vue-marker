@@ -114,13 +114,14 @@ function $removeMarker(target, needDestroy){
         if(target._isVueMarker){
             target.remove();
             if(needDestroy) {
-                console.log(marker._markerType);
                 let marker = target[keys];
                 if(marker._path&&marker._markerType){
                     let box = databox[marker._path].box[marker._markerType];
-                    let index = box.findIndex(item => item === marker);
-                    if(index >= 0){
-                        box.splice(index, 1, null);
+                    if(box) {
+                        let index = box.findIndex(item => item === marker);
+                        if(index >= 0){
+                            box.splice(index, 1, null);
+                        }
                     }
                 }
                 marker.vue.$root.$destroy();
@@ -135,9 +136,11 @@ function $removeMarker(target, needDestroy){
                             let marker = target[keys];
                             if(marker._path&&marker._markerType){
                                 let box = databox[marker._path].box[marker._markerType];
-                                let index = box.findIndex(item => item === marker);
-                                if(index >= 0){
-                                    box.splice(index, 1, null);
+                                if(box) {
+                                    let index = box.findIndex(item => item === marker);
+                                    if(index >= 0){
+                                        box.splice(index, 1, null);
+                                    }
                                 }
                             }
                             marker.vue.$root.$destroy();
