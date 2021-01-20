@@ -114,7 +114,7 @@ function $removeMarker(target, needDestroy){
         if(target._isVueMarker){
             target.remove();
             if(needDestroy) {
-                let marker = target[keys];
+                let marker = target;
                 if(marker._path&&marker._markerType){
                     let box = databox[marker._path].box[marker._markerType];
                     if(box) {
