@@ -54,7 +54,16 @@ class MarkerBox{
                 this.hookTrigger[id].push(marker);
             }
             self.$once('hook:beforeDestroy', () => {
-                this.hookTrigger[id] = null;
+                try{
+                    if(this.hookTrigger[id].includes(marker)){
+                        let index = this.hookTrigger[id].findIndex(item => item === marker);
+                        if(index >= 0) {
+                            this.hookTrigger[id].splice(index, 1);
+                        }
+                    }
+                }catch (e) {
+                    console.error(e);
+                }
             });
         }
     }
@@ -314,7 +323,20 @@ EventProxy = {
         $addMarker(...arguments)
     },
     removeMarkerHandler:function () {
-        $removeMarker(...arguments)
+        $removeMarker(...arguments);
+        if(this.$route&&this.$route.path){
+            let path = this.$route.path.replace(/\//g,"_");
+            let keys = Object.keys(databox[path].box);
+            keys.forEach(key => {
+                databox[path].box[key] = databox[path].box[key].filter(item => item && item._isVueMarker);
+            });
+        }else{
+            let path = 'markerbox'+this._uid.replace(/\//g,"_");
+            let keys = Object.keys(databox[path].box);
+            keys.forEach(key => {
+                databox[path].box[key] = databox[path].box[key].filter(item => item && item._isVueMarker);
+            });
+        }
     },
     makeMarkerHandler:function (options) {
         if(!this||this._isDestroyed||this._isBeingDestroyed){
