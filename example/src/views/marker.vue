@@ -29,18 +29,13 @@
             // console.log(this);
         },
         beforeDestroy() {
-            console.log('destroying');
+            // console.log('destroying');
         },
 	    /*
         * marker在被添加到地图上和被移除的时候，默认会调用一下两个方法作为回调
         * */
         methods:{
-            onAdd(){
-                console.log('added');
-            },
-            onRemove(){
-                console.log('removed');
-            }
+
         },
     }
 </script>

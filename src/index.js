@@ -39,10 +39,11 @@ class MarkerBox{
         }else{
             this.box.other.push(marker);
         }
+        const self = marker.vue;
         const vm = marker._vue_parent;
-        if(vm){
+        if(vm) {
             const id = vm._uid.toString();
-            if(!this.hookTrigger[id]){
+            if (!this.hookTrigger[id]) {
                 this.hookTrigger[id] = [marker];
                 vm.$once('hook:beforeDestroy', () => {
                     let box = [...this.hookTrigger[id]];
@@ -52,6 +53,9 @@ class MarkerBox{
             } else {
                 this.hookTrigger[id].push(marker);
             }
+            self.$once('hook:beforeDestroy', () => {
+                this.hookTrigger[id] = null;
+            });
         }
     }
     getMarkerBox(){

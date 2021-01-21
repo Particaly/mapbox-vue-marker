@@ -7,26 +7,54 @@
 	export default {
 		name: "route1",
         mounted() {
-			const lnglatbox = [[-74.0, 40],[-75.50, 40],[-74.5, 40.2]];
-			setTimeout(() => {
-				lnglatbox.forEach(lnglat => {
-					const marker = this.$makeMarker({
-						component: vuemarker,
-						lnglat,
+		    let flag = false;
+            window.add = () => {
+                let count = 0;
+                while (count < 4000) {
+                    const marker = this.$makeMarker({
+                        component: vuemarker,
+                        lnglat:[-74.0+count/1000, 40],
                         props: {
-						    debug: true
+                            debug: true
                         },
-						usebox: true,
-						markerType: 'vuemarker'
-					});
-					console.log(marker);
-					this.$addMarker(marker, window.map);
-				});
-
-                setTimeout(() => {
-                    this.$removeMarker(this.$getMarkerBox().vuemarker, true);
-                },1000);
-			},3000)
+                        usebox: true,
+                        markerType: 'vuemarker'
+                    });
+                    this.$addMarker(marker, window.map);
+                    count++;
+                }
+            }
+            add()
+            // let count = 0;
+            let handler = () => {
+                count++
+                let marker = this.$makeMarker({
+                    component: vuemarker,
+                    lnglat:[-74.0+count/1000, 40],
+                    props: {
+                        debug: true
+                    },
+                });
+                this.$removeMarker(marker, true);
+                let marker2 = this.$makeMarker({
+                    component: vuemarker,
+                    lnglat:[-74.0+count/1000, 40],
+                    props: {
+                        debug: true
+                    },
+                });
+                this.$removeMarker(marker2, true);
+                requestAnimationFrame(handler)
+                console.log(count*2);
+            }
+            // requestAnimationFrame(handler);
+            window.remove = () => {
+                this.$removeMarker(this.$getMarkerBox().vuemarker, true);
+            }
+            setInterval(() => {
+                flag = !flag;
+                flag ? add() : remove();
+            }, 4000);
         }
 	}
 </script>
