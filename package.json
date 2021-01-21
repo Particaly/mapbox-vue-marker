@@ -1,6 +1,6 @@
 {
   "name": "mapbox-vue-marker",
-  "version": "1.6.25",
+  "version": "1.6.26",
   "description": "A plug-in that allows you to develop mapbox GL pins using Vue components",
   "main": "dist/index.js",
   "scripts": {
