@@ -55,7 +55,7 @@ class MarkerBox{
             }
             self.$once('hook:beforeDestroy', () => {
                 try{
-                    if(this.hookTrigger[id].includes(marker)){
+                    if(this.hookTrigger[id]&&this.hookTrigger[id].includes(marker)){
                         let index = this.hookTrigger[id].findIndex(item => item === marker);
                         if(index >= 0) {
                             this.hookTrigger[id].splice(index, 1);
