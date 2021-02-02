@@ -6,7 +6,11 @@ import babel from 'rollup-plugin-babel'  // rollup 的 babel 插件，ES6转ES5
 export default {
   input: 'src/index.js',
   plugins: [
-    babel(),
+    babel({
+      exclude: 'node_modules/**',
+      runtimeHelpers: true,
+      plugins:[["@babel/transform-runtime",{regenerator: true}]]
+    }),
     json(),
     // resolve(),
     // commonjs()

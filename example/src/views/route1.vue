@@ -10,7 +10,7 @@
 		    let flag = false;
             window.add = () => {
                 let count = 0;
-                while (count < 4000) {
+                while (count < 10) {
                     const marker = this.$makeMarker({
                         component: vuemarker,
                         lnglat:[-74.0+count/1000, 40],
@@ -18,6 +18,7 @@
                             debug: true
                         },
                         usebox: true,
+                        promise: true,
                         markerType: 'vuemarker'
                     });
                     this.$addMarker(marker, window.map);

@@ -238,21 +238,33 @@ function $makeMarker(options){
 
     function overwrite(marker,options){
         marker._isVueMarker = true;
-        marker.addTo = new Proxy(marker.addTo, {
-            apply :function (target, thisArg, argArray) {
-                let res = Reflect.apply(...arguments);
-                addTo.bind(thisArg)();
-                marker._isOnMap = true;
-                return res
-            }
-        });
+        marker.addTo = async function (map) {
+            marker._isAdding = true;
+            await this.remove();
+            this._map = map;
+            map.getCanvasContainer().appendChild(this._element);
+            map.on('move', this._update);
+            map.on('moveend', this._update);
+            this.setDraggable(this._draggable);
+            this._update();
+            this._map.on('click', this._onMapClick);
+            addTo.bind(this)();
+            marker._isAdding = false;
+            marker._isOnMap = true;
+            return this;
+        }
         marker.remove = new Proxy(marker.remove, {
-            apply :function (target, thisArg, argArray) {
-                let tempArg = arguments;
-                remove.bind(thisArg)(() => {
-                    Reflect.apply(...tempArg);
+            apply :async function (target, thisArg, argArray) {
+                if(options.promise) {
+                    await remove.bind(thisArg)(null, options);
+                    Reflect.apply(target, thisArg, argArray);
                     marker._isOnMap = false;
-                });
+                } else {
+                    remove.bind(thisArg)(() => {
+                        Reflect.apply(target, thisArg, argArray);
+                        marker._isOnMap = false;
+                    });
+                }
             }
         });
         if(options.zIndex === undefined) {
@@ -277,24 +289,31 @@ function $makeMarker(options){
                 }
             }
         }
-        function remove(callback){
-            if(this.vue&&this.vue.onRemove){
-                const result = this.vue.onRemove(callback);
-                if(result !== true){
-                    const delay = Number(result);
-                    if(!isNaN(delay)){
-                        setTimeout(() => {
+        async function remove(callback, options){
+            if(options&&options.promise) {
+                if(this.vue&&this.vue.onRemove&&!this._isAdding){
+                    await this.vue.onRemove();
+                }
+            } else {
+                if(this.vue&&this.vue.onRemove){
+                    const result = this.vue.onRemove(callback);
+                    if(result !== true){
+                        const delay = Number(result);
+                        if(!isNaN(delay)){
+                            setTimeout(() => {
+                                callback()
+                            },delay)
+                        }else{
                             callback()
-                        },delay)
+                        }
                     }else{
-                        callback()
+                        log('移除扎点的返回值为true，需要手动移除marker方法');
                     }
                 }else{
-                    log('移除扎点的返回值为true，需要手动移除marker方法');
+                    callback()
                 }
-            }else{
-                callback()
             }
+
         }
         function update() {
             this.getElement().style.zIndex = ~~this._pos.y;

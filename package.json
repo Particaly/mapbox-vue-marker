@@ -24,6 +24,7 @@
     "@babel/preset-env": "^7.5.5",
     "@babel/plugin-proposal-optional-chaining": "^7.6.0",
     "babel-plugin-module-resolver": "^3.2.0",
+    "@babel/plugin-transform-runtime": "^7.12.10",
     "rollup": "^1.16.7",
     "rollup-plugin-babel": "^4.3.3",
     "rollup-plugin-commonjs": "^10.0.2",

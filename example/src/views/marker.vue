@@ -35,7 +35,18 @@
         * marker在被添加到地图上和被移除的时候，默认会调用一下两个方法作为回调
         * */
         methods:{
-
+            onAdd() {
+                console.log('add');
+            },
+            onRemove() {
+                console.log('removing');
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        console.log('500毫秒');
+                        resolve();
+                    }, 1000);
+                })
+            }
         },
     }
 </script>
