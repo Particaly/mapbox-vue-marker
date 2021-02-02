@@ -3,6 +3,7 @@
 </template>
 
 <script>
+import anime from 'animejs';
     export default {
         name: "vuemarker",
         data:function(){
@@ -36,16 +37,22 @@
         * */
         methods:{
             onAdd() {
-                console.log('add');
+                this.anime = anime({
+                    targets: this.$el,
+                    borderRadius: [0, 50],
+                    duration: 1000,
+                    autoplay: true
+                });
             },
             onRemove() {
-                console.log('removing');
-                return new Promise(resolve => {
-                    setTimeout(() => {
-                        console.log('500毫秒');
-                        resolve();
-                    }, 1000);
-                })
+                this.anime = anime({
+                    targets: this.$el,
+                    borderRadius: [50, 0],
+                    duration: 1000,
+                    easing: 'linear',
+                    autoplay: true
+                });
+                return this.anime.finished;
             }
         },
     }

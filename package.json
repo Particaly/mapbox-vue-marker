@@ -30,7 +30,8 @@
     "rollup-plugin-commonjs": "^10.0.2",
     "rollup-plugin-json": "^4.0.0",
     "rollup-plugin-node-resolve": "^5.2.0",
-    "rollup-plugin-uglify-es": "0.0.1"
+    "rollup-plugin-uglify-es": "0.0.1",
+    "animejs": "^3.2.1"
   },
   "dependencies": {
     "@jspatrick/helper": "^0.1.52"
