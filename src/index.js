@@ -137,8 +137,10 @@ function $removeMarker(target, needDestroy){
                         }
                     }
                 }
-                marker.vue.$root.$destroy();
-                marker.vue = marker._vue_parent = null;
+                if(marker.vue) {
+                    marker.vue.$root.$destroy();
+                    marker.vue = marker._vue_parent = null;
+                }
             }
         }else{
             for(let keys in target){ // 遍历目标
@@ -156,8 +158,10 @@ function $removeMarker(target, needDestroy){
                                     }
                                 }
                             }
-                            marker.vue.$root.$destroy();
-                            marker.vue = marker._vue_parent = null;
+                            if(marker.vue) {
+                                marker.vue.$root.$destroy();
+                                marker.vue = marker._vue_parent = null;
+                            }
                         }
                     }else if(isType('Object', target[keys])||isType('Array', target[keys])){
                         //仅在目标是对象或数组的情况下继续遍历
