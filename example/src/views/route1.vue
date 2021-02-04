@@ -50,7 +50,7 @@
             }
             // requestAnimationFrame(handler);
             window.remove = () => {
-                this.$removeMarker(this.$getMarkerBox().vuemarker, true);
+                this.$removeMarker(this.$getMarkerBox(), true);
             }
             setInterval(() => {
                 flag = !flag;

@@ -165,7 +165,7 @@ function $removeMarker(target, needDestroy){
                         }
                     }else if(isType('Object', target[keys])||isType('Array', target[keys])){
                         //仅在目标是对象或数组的情况下继续遍历
-                        return $removeMarker(target[keys]);
+                        $removeMarker(target[keys], needDestroy);
                     }
                 }
             }
